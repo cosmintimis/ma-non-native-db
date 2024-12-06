@@ -6,7 +6,6 @@ import {
     TouchableOpacity,
     SafeAreaView,
     Image,
-    ToastAndroid,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -16,6 +15,8 @@ import { MediaItem } from "@/model/mediaItem";
 import uuid from "react-native-uuid";
 import { convertUriToByteArray } from "@/utils/generalUtils";
 import { useMediaItemsStore } from "@/repository/repository";
+import toastConfig from "@/components/toastConfig";
+import Toast from "react-native-toast-message";
 
 export default function AddMediaItemView() {
     const navigation = useNavigation();
@@ -67,9 +68,11 @@ export default function AddMediaItemView() {
                 setDisableButton(true);
                 await addMediaItem(prepareData);
                 navigation.goBack();
-            } catch (e: any) {
-                console.error(e);
-                ToastAndroid.show("Encountered an error while adding new media item, please try again later", ToastAndroid.LONG);
+            } catch (e) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Encountered an error while adding new media item, please try again later!'
+                  })
             } finally{
                 setDisableButton(false);
             }
@@ -157,6 +160,7 @@ export default function AddMediaItemView() {
                     <Text className="text-white text-center">Add</Text>
                 </TouchableOpacity>
             </View>
+            <Toast config={toastConfig} />
         </SafeAreaView>
     );
 }

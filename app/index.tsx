@@ -1,4 +1,5 @@
 import { MediaItemList } from "@/components/mediaItemList";
+import toastConfig from "@/components/toastConfig";
 import { useMediaItemsStore } from "@/repository/repository";
 import { useNavigation } from "@react-navigation/native";
 import React from "react";
@@ -10,6 +11,7 @@ import {
     View,
     Text
 } from "react-native";
+import Toast from "react-native-toast-message";
 import Icon from "react-native-vector-icons/Ionicons";
 
 export default function Index() {
@@ -43,6 +45,7 @@ export default function Index() {
                     <Icon name="add" size={24} color="white" />
                 </TouchableOpacity>
             </View>
+            <Toast config={toastConfig} />
         </SafeAreaView>
     );
 }

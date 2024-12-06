@@ -12,6 +12,8 @@ import { useLocalSearchParams } from "expo-router";
 import alert from "@/utils/alertPolyfill";
 import { MediaItem } from "@/model/mediaItem";
 import Icon from "react-native-vector-icons/Ionicons";
+import toastConfig from "@/components/toastConfig";
+import Toast from "react-native-toast-message";
 
 export default function UpdateMediaItemView() {
     const navigation = useNavigation();
@@ -52,10 +54,14 @@ export default function UpdateMediaItemView() {
             try {
                 setDisableButton(true);
                 await updateMediaItem(prepareData);
-            } catch (e) {
-                console.error(e);
-            } finally {
                 navigation.goBack();
+            } catch (e) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Encountered an error while updating media item, please try again later!'
+                  })
+            } finally {
+               setDisableButton(false);
             }
         }
     };
@@ -131,6 +137,7 @@ export default function UpdateMediaItemView() {
                     <Text className="text-white text-center">Save</Text>
                 </TouchableOpacity>
             </View>
+            <Toast config={toastConfig} />
         </SafeAreaView>
     );
 }

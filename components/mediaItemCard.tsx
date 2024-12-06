@@ -4,6 +4,7 @@ import { useMediaItemsStore } from "@/repository/repository";
 import { Buffer } from "buffer";
 import alert from "@/utils/alertPolyfill";
 import { useNavigation } from "expo-router";
+import Toast from "react-native-toast-message";
 
 export const MediaItemCard = ({ mediaItem }: { mediaItem: MediaItem }) => {
     const { deleteMediaItem } = useMediaItemsStore();
@@ -28,11 +29,14 @@ export const MediaItemCard = ({ mediaItem }: { mediaItem: MediaItem }) => {
                 {
                     text: "Delete",
                     onPress: async () => {
-                        console.log(`Deleting media with ID: ${mediaItem.id}`);
                         try {
+                            throw new Error("Not implemented");
                             await deleteMediaItem(mediaItem.id);
                         } catch (e) {
-                            console.error(e);
+                            Toast.show({
+                                type: 'error',
+                                text1: 'Encountered an error while deleting media item, please try again later!'
+                              })
                         }
                     },
                 },
