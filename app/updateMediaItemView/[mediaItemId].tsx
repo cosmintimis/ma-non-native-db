@@ -40,7 +40,7 @@ export default function UpdateMediaItemView() {
     const [tags, setTags] = useState(mediaItemTagsAsString);
     const [disableButton, setDisableButton] = useState(false);
 
-    const handleUpdate = () => {
+    const handleUpdate = async () => {
         if (isFormValid && !disableButton) {
             const prepareData: MediaItem = {
                 ...mediaItem!,
@@ -51,7 +51,7 @@ export default function UpdateMediaItemView() {
             };
             try {
                 setDisableButton(true);
-                updateMediaItem(prepareData);
+                await updateMediaItem(prepareData);
             } catch (e) {
                 console.error(e);
             } finally {

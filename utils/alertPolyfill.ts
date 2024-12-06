@@ -2,7 +2,7 @@ import { Alert, Platform } from "react-native";
 
 type AlertOption = {
     text: string;
-    onPress: () => void;
+    onPress: () => Promise<void> | void;
     style?: "default" | "cancel" | "destructive";
 };
 

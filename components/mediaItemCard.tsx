@@ -15,7 +15,7 @@ export const MediaItemCard = ({ mediaItem }: { mediaItem: MediaItem }) => {
         });
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         alert(
             "Delete Confirmation",
             "Are you sure you want to delete this media?",
@@ -27,10 +27,10 @@ export const MediaItemCard = ({ mediaItem }: { mediaItem: MediaItem }) => {
                 },
                 {
                     text: "Delete",
-                    onPress: () => {
+                    onPress: async () => {
                         console.log(`Deleting media with ID: ${mediaItem.id}`);
                         try {
-                            deleteMediaItem(mediaItem.id);
+                            await deleteMediaItem(mediaItem.id);
                         } catch (e) {
                             console.error(e);
                         }

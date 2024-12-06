@@ -62,7 +62,7 @@ export default function AddMediaItemView() {
             };
             try {
                 setDisableButton(true);
-                addMediaItem(prepareData);
+                await addMediaItem(prepareData);
             } catch (e) {
                 console.error(e);
             } finally {

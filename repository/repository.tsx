@@ -1,9 +1,11 @@
 import { MediaItem, MEDIA_TYPE } from "@/model/mediaItem";
+import { deleteMediaItemDb, fetchMediaItems, insertMediaItemDb, updateMediaItemDb } from "@/utils/db";
 import { loadStoredImage } from "@/utils/generalUtils";
+import { useSQLiteContext } from "expo-sqlite";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import uuid from "react-native-uuid";
 
-async function loadInitMediaItems(): Promise<MediaItem[]> {
+export async function loadInitMediaItems(): Promise<MediaItem[]> {
     const [mediaData1, mediaData2] = await Promise.all([
         loadStoredImage(require("../assets/images/cat1.jpg")),
         loadStoredImage(require("../assets/images/cat2.jpg")),
@@ -40,31 +42,36 @@ type MediaItemContextType = {
     mediaItems: MediaItem[];
     setMediaItems: React.Dispatch<React.SetStateAction<MediaItem[]>>;
     handleSearch: (searchTerm: string) => void;
-    deleteMediaItem: (id: string) => void;
+    deleteMediaItem: (id: string) => Promise<void>;
     getMediaItemById: (id: string) => MediaItem | undefined;
-    updateMediaItem: (mediaItem: MediaItem) => void;
-    addMediaItem: (mediaItem: MediaItem) => void;
+    updateMediaItem: (mediaItem: MediaItem) => Promise<void>;
+    addMediaItem: (mediaItem: MediaItem) => Promise<void>;
 };
 
 export const MediaItemContext = createContext<MediaItemContextType>({
     mediaItems: [],
     setMediaItems: () => {},
     handleSearch: () => {},
-    deleteMediaItem: () => {},
+    deleteMediaItem: async () => {},
     getMediaItemById: () => undefined,
-    updateMediaItem: () => {},
-    addMediaItem: () => {},
+    updateMediaItem: async () => {},
+    addMediaItem: async () => {},
 });
 
 export const MediaItemsProvider = ({ children }: any) => {
     const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
     const allMediaItems = useRef<MediaItem[]>([]);
     const lastSearchTerm = useRef<string>("");
+    const db = useSQLiteContext();
 
     const loadInit = async () => {
-        const mediaItems = await loadInitMediaItems();
-        setMediaItems(mediaItems);
-        allMediaItems.current = mediaItems;
+        try{
+            const mediaItems = await fetchMediaItems(db);
+            setMediaItems(mediaItems);
+            allMediaItems.current = mediaItems;
+        } catch (error) {
+            console.error("Error loading media items", error);
+        }
     };
 
     useEffect(() => {
@@ -84,30 +91,60 @@ export const MediaItemsProvider = ({ children }: any) => {
         setMediaItems(filteredMediaItems);
     };
 
-    const deleteMediaItem = (id: string) => {
-        const newMediaItems = allMediaItems.current.filter(
-            (mediaItem) => mediaItem.id !== id
-        );
-        allMediaItems.current = newMediaItems;
-        handleSearch(lastSearchTerm.current);
+    const deleteMediaItem = async (id: string) => {
+        // Remove from db first
+        try{
+            const result = await deleteMediaItemDb(db, id);
+            if(result < 1) {
+                console.error("Error deleting media item from db", id);
+                return;
+            }
+            const newMediaItems = allMediaItems.current.filter(
+                (mediaItem) => mediaItem.id !== id
+            );
+            allMediaItems.current = newMediaItems;
+            handleSearch(lastSearchTerm.current);
+        } catch (error) {
+            console.error("Error deleting media item", error);
+        }
     };
 
     const getMediaItemById = (id: string) => {
         return allMediaItems.current.find((mediaItem) => mediaItem.id === id);
     };
 
-    const updateMediaItem = (mediaItem: MediaItem) => {
-        const newMediaItems = allMediaItems.current.map((item) =>
-            item.id === mediaItem.id ? mediaItem : item
-        );
-        allMediaItems.current = newMediaItems;
-        handleSearch(lastSearchTerm.current);
+    const updateMediaItem = async (mediaItem: MediaItem) => {
+        // Update in db first
+        try{
+            const result = await updateMediaItemDb(db, mediaItem);
+            if(result < 1) {
+                console.error("Error updating media item in db", mediaItem);
+                return;
+            }
+            const newMediaItems = allMediaItems.current.map((item) =>
+                item.id === mediaItem.id ? mediaItem : item
+            );
+            allMediaItems.current = newMediaItems;
+            handleSearch(lastSearchTerm.current);
+        }catch (error) {
+            console.error("Error updating media item", error);
+        }
     };
 
-    const addMediaItem = (mediaItem: MediaItem) => {
+    const addMediaItem = async (mediaItem: MediaItem) => {
+        // Add to db first
+       try{
+        const result = await insertMediaItemDb(db, mediaItem);
+        if(result < 1) {
+            console.error("Error adding media item to db", mediaItem);
+            return;
+        }
         const newMediaItems = [...allMediaItems.current, mediaItem];
         allMediaItems.current = newMediaItems;
         handleSearch(lastSearchTerm.current);
+       }catch (error) {
+              console.error("Error adding media item", error);
+        }
     };
 
     return (

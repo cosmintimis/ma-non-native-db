@@ -1,30 +1,34 @@
 import { MediaItemsProvider } from "@/repository/repository";
 import { Stack } from "expo-router";
 import "../global.css";
+import { SQLiteProvider, useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
+import initDb from "@/utils/db";
 
 export default function RootLayout() {
     return (
-        <MediaItemsProvider>
-            <Stack>
-                <Stack.Screen
-                    name="index"
-                    options={{
-                        headerShown: false,
-                    }}
-                />
-                <Stack.Screen
-                    name="addMediaItemView/index"
-                    options={{
-                        headerShown: false,
-                    }}
-                />
-                <Stack.Screen
-                    name="updateMediaItemView/[mediaItemId]"
-                    options={{
-                        headerShown: false,
-                    }}
-                />
-            </Stack>
-        </MediaItemsProvider>
+        <SQLiteProvider databaseName="DeepFakeGuardian" onInit={initDb}>
+            <MediaItemsProvider>
+                <Stack>
+                    <Stack.Screen
+                        name="index"
+                        options={{
+                            headerShown: false,
+                        }}
+                    />
+                    <Stack.Screen
+                        name="addMediaItemView/index"
+                        options={{
+                            headerShown: false,
+                        }}
+                    />
+                    <Stack.Screen
+                        name="updateMediaItemView/[mediaItemId]"
+                        options={{
+                            headerShown: false,
+                        }}
+                    />
+                </Stack>
+            </MediaItemsProvider>
+        </SQLiteProvider>
     );
 }
