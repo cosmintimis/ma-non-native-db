@@ -1,7 +1,7 @@
 import { MediaItemsProvider } from "@/repository/repository";
 import { Stack } from "expo-router";
 import "../global.css";
-import { SQLiteProvider, useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
+import { SQLiteProvider} from 'expo-sqlite';
 import initDb from "@/utils/db";
 
 export default function RootLayout() {
