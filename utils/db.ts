@@ -1,6 +1,7 @@
-import { MediaItem } from "@/model/mediaItem";
-import { loadInitMediaItems } from "@/repository/repository";
+import { MEDIA_TYPE, MediaItem } from "@/model/mediaItem";
 import * as SQLite from "expo-sqlite";
+import { loadStoredImage } from "./generalUtils";
+import uuid from "react-native-uuid";
 
 const initDb = async (db: SQLite.SQLiteDatabase) => {
     try {
@@ -179,3 +180,36 @@ export const deleteMediaItemDb = async (
 };
 
 export default initDb;
+
+async function loadInitMediaItems(): Promise<MediaItem[]> {
+    const [mediaData1, mediaData2] = await Promise.all([
+        loadStoredImage(require("../assets/images/cat1.jpg")),
+        loadStoredImage(require("../assets/images/cat2.jpg")),
+    ]);
+
+    const mediaItems: MediaItem[] = [
+        {
+            id: uuid.v4(),
+            title: "Cat1",
+            description: "description 1",
+            location: "Borsa Maramures",
+            type: MEDIA_TYPE.IMAGE,
+            mimeType: "image/jpeg",
+            size: mediaData1.length,
+            mediaData: mediaData1,
+            tags: ["grey", "majestic"],
+        },
+        {
+            id: uuid.v4(),
+            title: "Cat2",
+            description: "description 2",
+            location: "Cluj-Napoca Cluj",
+            type: MEDIA_TYPE.IMAGE,
+            mimeType: "image/jpeg",
+            size: mediaData2.length,
+            mediaData: mediaData2,
+            tags: ["orange", "grey"],
+        },
+    ];
+    return mediaItems;
+}

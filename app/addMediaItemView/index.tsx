@@ -5,7 +5,8 @@ import {
     TextInput,
     TouchableOpacity,
     SafeAreaView,
-    Image
+    Image,
+    ToastAndroid,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -18,7 +19,7 @@ import { useMediaItemsStore } from "@/repository/repository";
 
 export default function AddMediaItemView() {
     const navigation = useNavigation();
-    const {addMediaItem} = useMediaItemsStore();
+    const { addMediaItem } = useMediaItemsStore();
 
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -44,7 +45,9 @@ export default function AddMediaItemView() {
 
     const handleCreate = async () => {
         if (isFormValid && !disableButton) {
-            const uploadedImageByteArray = await convertUriToByteArray(imageUri);
+            const uploadedImageByteArray = await convertUriToByteArray(
+                imageUri
+            );
             if (!uploadedImageByteArray) {
                 console.error("Error converting image to byte array");
                 return;
@@ -63,10 +66,12 @@ export default function AddMediaItemView() {
             try {
                 setDisableButton(true);
                 await addMediaItem(prepareData);
-            } catch (e) {
-                console.error(e);
-            } finally {
                 navigation.goBack();
+            } catch (e: any) {
+                console.error(e);
+                ToastAndroid.show("Encountered an error while adding new media item, please try again later", ToastAndroid.LONG);
+            } finally{
+                setDisableButton(false);
             }
         }
     };
