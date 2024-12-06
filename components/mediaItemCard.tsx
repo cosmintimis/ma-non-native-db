@@ -30,7 +30,6 @@ export const MediaItemCard = ({ mediaItem }: { mediaItem: MediaItem }) => {
                     text: "Delete",
                     onPress: async () => {
                         try {
-                            throw new Error("Not implemented");
                             await deleteMediaItem(mediaItem.id);
                         } catch (e) {
                             Toast.show({
