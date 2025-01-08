@@ -7,7 +7,7 @@ export type MediaItem = {
     mimeType: string;
     size: number;
     tags: string[];
-    mediaData: Uint8Array;
+    mediaData: string;
 };
 
 export const MEDIA_TYPE = {

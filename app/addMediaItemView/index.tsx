@@ -53,20 +53,19 @@ export default function AddMediaItemView() {
                 console.error("Error converting image to byte array");
                 return;
             }
-            const prepareData: MediaItem = {
+            const prepareData: Omit<MediaItem, 'id'> = {
                 title,
                 description,
                 location,
                 tags: tags.split(",").map((tag) => tag.trim()),
-                id: uuid.v4(),
                 type: "IMAGE", // only image type is supported
                 mimeType: imageMimeType.current ?? "image/jpeg",
                 size: uploadedImageByteArray.length,
-                mediaData: uploadedImageByteArray,
+                mediaData: "",
             };
             try {
                 setDisableButton(true);
-                await addMediaItem(prepareData);
+                // await addMediaItem(prepareData);
                 navigation.goBack();
             } catch (e) {
                 Toast.show({

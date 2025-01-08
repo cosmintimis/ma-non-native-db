@@ -1,3 +1,4 @@
+import { getMediaItems } from "@/api/media";
 import { MediaItem, MEDIA_TYPE } from "@/model/mediaItem";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
@@ -29,11 +30,11 @@ export const MediaItemsProvider = ({ children }: any) => {
     const loadInit = async () => {
         try {
             // const mediaItems = await fetchMediaItems(db);
-            const mediaItems: MediaItem[] = [];
+            const mediaItems: MediaItem[] = await getMediaItems();
             setMediaItems(mediaItems);
             allMediaItems.current = mediaItems;
         } catch (error) {
-            console.error("Error loading media items", error);
+            console.error("Error loading media items", JSON.stringify(error, null, 2));
         }
     };
 

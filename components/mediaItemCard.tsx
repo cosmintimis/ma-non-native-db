@@ -1,7 +1,6 @@
 import { MEDIA_TYPE, MediaItem } from "@/model/mediaItem";
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import { useMediaItemsStore } from "@/repository/repository";
-import { Buffer } from "buffer";
 import alert from "@/utils/alertPolyfill";
 import { useNavigation } from "expo-router";
 import Toast from "react-native-toast-message";
@@ -44,9 +43,7 @@ export const MediaItemCard = ({ mediaItem }: { mediaItem: MediaItem }) => {
     };
 
     const defaultImage = require("../assets/images/no_picture.jpg");
-    const imageBase64 = `data:${mediaItem.mimeType};base64,${Buffer.from(
-        mediaItem.mediaData
-    ).toString("base64")}`;
+    const imageBase64 = mediaItem.mediaData;
 
     return (
         <View className="flex flex-col mx-4 my-2 p-4 bg-white rounded-xl shadow-lg">
