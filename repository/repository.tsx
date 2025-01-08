@@ -1,11 +1,4 @@
 import { MediaItem, MEDIA_TYPE } from "@/model/mediaItem";
-import {
-    deleteMediaItemDb,
-    fetchMediaItems,
-    insertMediaItemDb,
-    updateMediaItemDb,
-} from "@/utils/db";
-import { useSQLiteContext } from "expo-sqlite";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 type MediaItemContextType = {
@@ -32,11 +25,11 @@ export const MediaItemsProvider = ({ children }: any) => {
     const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
     const allMediaItems = useRef<MediaItem[]>([]);
     const lastSearchTerm = useRef<string>("");
-    const db = useSQLiteContext();
 
     const loadInit = async () => {
         try {
-            const mediaItems = await fetchMediaItems(db);
+            // const mediaItems = await fetchMediaItems(db);
+            const mediaItems: MediaItem[] = [];
             setMediaItems(mediaItems);
             allMediaItems.current = mediaItems;
         } catch (error) {
@@ -64,18 +57,18 @@ export const MediaItemsProvider = ({ children }: any) => {
     const deleteMediaItem = async (id: string) => {
         // Remove from db first
         try {
-            const result = await deleteMediaItemDb(db, id);
-            if (result < 1) {
-                console.error("Error deleting media item from db", id);
-                throw new CustomError(
-                    "Encountered an error while deleting media item, please try again later"
-                );
-            }
-            const newMediaItems = allMediaItems.current.filter(
-                (mediaItem) => mediaItem.id !== id
-            );
-            allMediaItems.current = newMediaItems;
-            handleSearch(lastSearchTerm.current);
+            // const result = await deleteMediaItemDb(db, id);
+            // if (result < 1) {
+            //     console.error("Error deleting media item from db", id);
+            //     throw new CustomError(
+            //         "Encountered an error while deleting media item, please try again later"
+            //     );
+            // }
+            // const newMediaItems = allMediaItems.current.filter(
+            //     (mediaItem) => mediaItem.id !== id
+            // );
+            // allMediaItems.current = newMediaItems;
+            // handleSearch(lastSearchTerm.current);
         } catch (error) {
             console.error("Error deleting media item", error);
             throw new CustomError(
@@ -91,18 +84,18 @@ export const MediaItemsProvider = ({ children }: any) => {
     const updateMediaItem = async (mediaItem: MediaItem) => {
         // Update in db first
         try {
-            const result = await updateMediaItemDb(db, mediaItem);
-            if (result < 1) {
-                console.error("Error updating media item in db", mediaItem.id);
-                throw new CustomError(
-                    "Encountered an error while updating media item, please try again later"
-                );
-            }
-            const newMediaItems = allMediaItems.current.map((item) =>
-                item.id === mediaItem.id ? mediaItem : item
-            );
-            allMediaItems.current = newMediaItems;
-            handleSearch(lastSearchTerm.current);
+            // const result = await updateMediaItemDb(db, mediaItem);
+            // if (result < 1) {
+            //     console.error("Error updating media item in db", mediaItem.id);
+            //     throw new CustomError(
+            //         "Encountered an error while updating media item, please try again later"
+            //     );
+            // }
+            // const newMediaItems = allMediaItems.current.map((item) =>
+            //     item.id === mediaItem.id ? mediaItem : item
+            // );
+            // allMediaItems.current = newMediaItems;
+            // handleSearch(lastSearchTerm.current);
         } catch (error) {
             console.error("Error updating media item", error);
             throw new CustomError(
@@ -114,16 +107,16 @@ export const MediaItemsProvider = ({ children }: any) => {
     const addMediaItem = async (mediaItem: MediaItem) => {
         // Add to db first
         try {
-            const result = await insertMediaItemDb(db, mediaItem);
-            if (result < 1) {
-                console.error("Error adding media item to db", mediaItem.id);
-                throw new CustomError(
-                    "Encountered an error while adding new media item, please try again later"
-                );
-            }
-            const newMediaItems = [...allMediaItems.current, mediaItem];
-            allMediaItems.current = newMediaItems;
-            handleSearch(lastSearchTerm.current);
+            // const result = await insertMediaItemDb(db, mediaItem);
+            // if (result < 1) {
+            //     console.error("Error adding media item to db", mediaItem.id);
+            //     throw new CustomError(
+            //         "Encountered an error while adding new media item, please try again later"
+            //     );
+            // }
+            // const newMediaItems = [...allMediaItems.current, mediaItem];
+            // allMediaItems.current = newMediaItems;
+            // handleSearch(lastSearchTerm.current);
         } catch (error) {
             console.error("Error adding media item", error);
             throw new CustomError(
