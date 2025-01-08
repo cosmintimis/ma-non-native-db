@@ -53,7 +53,7 @@ export default function UpdateMediaItemView() {
             };
             try {
                 setDisableButton(true);
-                // await updateMediaItem(prepareData);
+                await updateMediaItem(prepareData);
                 navigation.goBack();
             } catch (e) {
                 Toast.show({

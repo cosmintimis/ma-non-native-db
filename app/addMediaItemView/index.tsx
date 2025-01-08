@@ -12,8 +12,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import * as ImagePicker from "expo-image-picker";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { MediaItem } from "@/model/mediaItem";
-import uuid from "react-native-uuid";
-import { convertUriToByteArray } from "@/utils/generalUtils";
+import { convertToBase64, convertUriToByteArray } from "@/utils/generalUtils";
 import { useMediaItemsStore } from "@/repository/repository";
 import toastConfig from "@/components/toastConfig";
 import Toast from "react-native-toast-message";
@@ -29,6 +28,7 @@ export default function AddMediaItemView() {
     const [disableButton, setDisableButton] = useState(false);
     const [imageUri, setImageUri] = useState<string | null>(null);
     const imageMimeType = useRef<string | null>(null);
+    const imageBase64 = useRef<string | null>(null);
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -41,6 +41,7 @@ export default function AddMediaItemView() {
         if (!result.canceled) {
             setImageUri(result.assets[0].uri);
             imageMimeType.current = result.assets[0].mimeType ?? null;
+            imageBase64.current = (await convertToBase64(result.assets[0].uri)) ?? null;
         }
     };
 
@@ -53,26 +54,27 @@ export default function AddMediaItemView() {
                 console.error("Error converting image to byte array");
                 return;
             }
-            const prepareData: Omit<MediaItem, 'id'> = {
+            const base64Format = `data:${imageMimeType.current};base64,${imageBase64.current}`;
+            const prepareData: Omit<MediaItem, "id"> = {
                 title,
                 description,
                 location,
-                tags: tags.split(",").map((tag) => tag.trim()),
+                tags: tags.split(","),
                 type: "IMAGE", // only image type is supported
                 mimeType: imageMimeType.current ?? "image/jpeg",
                 size: uploadedImageByteArray.length,
-                mediaData: "",
+                mediaData: base64Format,
             };
             try {
                 setDisableButton(true);
-                // await addMediaItem(prepareData);
+                await addMediaItem(prepareData);
                 navigation.goBack();
             } catch (e) {
                 Toast.show({
-                    type: 'error',
-                    text1: 'Encountered an error while adding new media item, please try again later!'
-                  })
-            } finally{
+                    type: "error",
+                    text1: "Encountered an error while adding new media item, please try again later!",
+                });
+            } finally {
                 setDisableButton(false);
             }
         }

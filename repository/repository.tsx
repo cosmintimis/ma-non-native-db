@@ -1,4 +1,4 @@
-import { getMediaItems } from "@/api/media";
+import { createMediaItem, getMediaItems, removeMediaItem, updateMedia } from "@/api/media";
 import { MediaItem, MEDIA_TYPE } from "@/model/mediaItem";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
@@ -9,7 +9,7 @@ type MediaItemContextType = {
     deleteMediaItem: (id: string) => Promise<void>;
     getMediaItemById: (id: string) => MediaItem | undefined;
     updateMediaItem: (mediaItem: MediaItem) => Promise<void>;
-    addMediaItem: (mediaItem: MediaItem) => Promise<void>;
+    addMediaItem: (mediaItem: Omit<MediaItem, 'id'>) => Promise<void>;
 };
 
 export const MediaItemContext = createContext<MediaItemContextType>({
@@ -56,15 +56,9 @@ export const MediaItemsProvider = ({ children }: any) => {
     };
 
     const deleteMediaItem = async (id: string) => {
-        // Remove from db first
         try {
-            // const result = await deleteMediaItemDb(db, id);
-            // if (result < 1) {
-            //     console.error("Error deleting media item from db", id);
-            //     throw new CustomError(
-            //         "Encountered an error while deleting media item, please try again later"
-            //     );
-            // }
+            await removeMediaItem(id);
+            await loadInit();
             // const newMediaItems = allMediaItems.current.filter(
             //     (mediaItem) => mediaItem.id !== id
             // );
@@ -83,15 +77,12 @@ export const MediaItemsProvider = ({ children }: any) => {
     };
 
     const updateMediaItem = async (mediaItem: MediaItem) => {
-        // Update in db first
         try {
-            // const result = await updateMediaItemDb(db, mediaItem);
-            // if (result < 1) {
-            //     console.error("Error updating media item in db", mediaItem.id);
-            //     throw new CustomError(
-            //         "Encountered an error while updating media item, please try again later"
-            //     );
-            // }
+            await updateMedia({
+                ...mediaItem,
+                tags: mediaItem.tags.join(","),
+            });
+            await loadInit();
             // const newMediaItems = allMediaItems.current.map((item) =>
             //     item.id === mediaItem.id ? mediaItem : item
             // );
@@ -105,16 +96,13 @@ export const MediaItemsProvider = ({ children }: any) => {
         }
     };
 
-    const addMediaItem = async (mediaItem: MediaItem) => {
-        // Add to db first
+    const addMediaItem = async (mediaItem: Omit<MediaItem, 'id'>) => {
         try {
-            // const result = await insertMediaItemDb(db, mediaItem);
-            // if (result < 1) {
-            //     console.error("Error adding media item to db", mediaItem.id);
-            //     throw new CustomError(
-            //         "Encountered an error while adding new media item, please try again later"
-            //     );
-            // }
+            await createMediaItem({
+                ...mediaItem,
+                tags: mediaItem.tags.join(","),
+            });
+            await loadInit();
             // const newMediaItems = [...allMediaItems.current, mediaItem];
             // allMediaItems.current = newMediaItems;
             // handleSearch(lastSearchTerm.current);

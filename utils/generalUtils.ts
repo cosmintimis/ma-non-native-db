@@ -49,3 +49,15 @@ export const convertUriToByteArray = async (uri: string): Promise<Uint8Array | u
     return undefined; 
   }
 };
+
+export const convertToBase64 = async (uri: string): Promise<string | undefined> => {
+    try {
+        const base64 = await FileSystem.readAsStringAsync(uri, {
+            encoding: FileSystem.EncodingType.Base64,
+        });
+        return base64;
+    } catch (error) {
+        console.error("Error converting file to base64: ", error);
+        return undefined;
+    }
+}
