@@ -1,5 +1,10 @@
-import { createMediaItem, getMediaItems, removeMediaItem, updateMedia } from "@/api/media";
-import { MediaItem, MEDIA_TYPE } from "@/model/mediaItem";
+import {
+    createMediaItem,
+    getMediaItems,
+    removeMediaItem,
+    updateMedia,
+} from "@/api/media";
+import { MediaItem } from "@/model/mediaItem";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 type MediaItemContextType = {
@@ -9,8 +14,16 @@ type MediaItemContextType = {
     deleteMediaItem: (id: string) => Promise<void>;
     getMediaItemById: (id: string) => MediaItem | undefined;
     updateMediaItem: (mediaItem: MediaItem) => Promise<void>;
-    addMediaItem: (mediaItem: Omit<MediaItem, 'id'>) => Promise<void>;
+    addMediaItem: (mediaItem: Omit<MediaItem, "id">) => Promise<void>;
 };
+
+type WebSocketMessage = {
+    type: string;
+};
+export const WEBSOCKET_MESSAGE_TYPE = {
+    MEDIA_UPDATED: "media_updated",
+} as const;
+export type WEBSOCKET_MESSAGE_TYPE = (typeof WEBSOCKET_MESSAGE_TYPE)[keyof typeof WEBSOCKET_MESSAGE_TYPE];
 
 export const MediaItemContext = createContext<MediaItemContextType>({
     mediaItems: [],
@@ -26,21 +39,56 @@ export const MediaItemsProvider = ({ children }: any) => {
     const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
     const allMediaItems = useRef<MediaItem[]>([]);
     const lastSearchTerm = useRef<string>("");
+    const [serverStatus, setServerStatus] = useState("Offline");
 
-    const loadInit = async () => {
+    const fetchMediaItems = async () => {
         try {
-            // const mediaItems = await fetchMediaItems(db);
             const mediaItems: MediaItem[] = await getMediaItems();
             setMediaItems(mediaItems);
             allMediaItems.current = mediaItems;
+            handleSearch(lastSearchTerm.current);
         } catch (error) {
-            console.error("Error loading media items", JSON.stringify(error, null, 2));
+            console.error(
+                "Error loading media items",
+                JSON.stringify(error, null, 2)
+            );
         }
     };
 
     useEffect(() => {
-        loadInit();
+        fetchMediaItems();
     }, []);
+
+    // Check server status every 5 seconds
+    // useEffect(() => {
+    //     const interval = setInterval(async () => {
+    //         try {
+    //             await fetch("http://192.168.0.169:9090/api/health-check/v1/status");
+    //             if (serverStatus === "Offline") {
+    //                 setServerStatus("Online");
+    //             }
+    //         } catch (error) {
+    //             setServerStatus("Offline");
+    //         }
+    //     }, 5000);
+    //     return () => clearInterval(interval);
+    // }, [serverStatus]);
+
+    useEffect(() => {
+        const socket = new WebSocket('ws://192.168.0.169:9090/ws');
+        socket.onopen = () => {
+          console.log('open');
+        };
+        socket.onmessage = (e: MessageEvent) => {
+            const message: WebSocketMessage = JSON.parse(e.data);
+            if (message.type === WEBSOCKET_MESSAGE_TYPE.MEDIA_UPDATED) {
+                fetchMediaItems();
+            }
+        }
+        socket.onclose = () => {
+          console.log('close');
+        }
+    }, [serverStatus]);
 
     const handleSearch = (searchTerm: string) => {
         lastSearchTerm.current = searchTerm;
@@ -58,12 +106,6 @@ export const MediaItemsProvider = ({ children }: any) => {
     const deleteMediaItem = async (id: string) => {
         try {
             await removeMediaItem(id);
-            await loadInit();
-            // const newMediaItems = allMediaItems.current.filter(
-            //     (mediaItem) => mediaItem.id !== id
-            // );
-            // allMediaItems.current = newMediaItems;
-            // handleSearch(lastSearchTerm.current);
         } catch (error) {
             console.error("Error deleting media item", error);
             throw new CustomError(
@@ -82,12 +124,6 @@ export const MediaItemsProvider = ({ children }: any) => {
                 ...mediaItem,
                 tags: mediaItem.tags.join(","),
             });
-            await loadInit();
-            // const newMediaItems = allMediaItems.current.map((item) =>
-            //     item.id === mediaItem.id ? mediaItem : item
-            // );
-            // allMediaItems.current = newMediaItems;
-            // handleSearch(lastSearchTerm.current);
         } catch (error) {
             console.error("Error updating media item", error);
             throw new CustomError(
@@ -96,16 +132,12 @@ export const MediaItemsProvider = ({ children }: any) => {
         }
     };
 
-    const addMediaItem = async (mediaItem: Omit<MediaItem, 'id'>) => {
+    const addMediaItem = async (mediaItem: Omit<MediaItem, "id">) => {
         try {
             await createMediaItem({
                 ...mediaItem,
                 tags: mediaItem.tags.join(","),
             });
-            await loadInit();
-            // const newMediaItems = [...allMediaItems.current, mediaItem];
-            // allMediaItems.current = newMediaItems;
-            // handleSearch(lastSearchTerm.current);
         } catch (error) {
             console.error("Error adding media item", error);
             throw new CustomError(

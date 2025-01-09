@@ -16,7 +16,7 @@ export type MediaItemAPI = {
 }
 
 export const getMediaItems = async (): Promise<MediaItem[]> => {
-    const response = await axios.get(`${BASE_URL}/all`);
+    const response = await axios.get(`${BASE_URL}`);
     const mediaItems: MediaItem[] = response.data.map((item: MediaItemAPI) => {
         return {
             id: item.id,
@@ -47,7 +47,7 @@ export const removeMediaItem = async (id: string): Promise<{deleted: boolean}> =
 }
 
 export const getMediaItemById = async (id: string): Promise<MediaItem> => {
-    const response = await axios.get(`${BASE_URL}?id=${id}`);
+    const response = await axios.get(`${BASE_URL}/${id}`);
     const item: MediaItemAPI = response.data;
     return {
         id: item.id,
