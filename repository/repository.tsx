@@ -5,6 +5,7 @@ import {
     updateMedia,
 } from "@/api/media";
 import { MediaItem } from "@/model/mediaItem";
+import { fetchV2 } from "@/utils/generalUtils";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 type MediaItemContextType = {
@@ -51,6 +52,7 @@ export const MediaItemsProvider = ({ children }: any) => {
     const allMediaItems = useRef<MediaItem[]>([]);
     const lastSearchTerm = useRef<string>("");
     const [serverStatus, setServerStatus] = useState<SERVER_STATUS_TYPE>(SERVER_STATUS_TYPE.ONLINE);
+    const [socket, setSocket] = useState<WebSocket | null>(null);
 
     const fetchMediaItems = async () => {
         try {
@@ -74,32 +76,70 @@ export const MediaItemsProvider = ({ children }: any) => {
     useEffect(() => {
         const interval = setInterval(async () => {
             try {
-                await fetch("http://192.168.0.169:9090/api/health-check/v1/status");
+                console.log("Checking server status");
+                await fetchV2("http://192.168.0.169:9090/api/health-check/v1/status", {
+                    timeout: 3000 // 3 seconds
+                });
                 if (serverStatus === SERVER_STATUS_TYPE.OFFLINE) {
+                    await syncData();
+                    await fetchMediaItems();
                     setServerStatus(SERVER_STATUS_TYPE.ONLINE);
                 }
             } catch (error) {
-                setServerStatus(SERVER_STATUS_TYPE.OFFLINE);
+                console.error("Server is offline", error);
+                if(serverStatus === SERVER_STATUS_TYPE.ONLINE) {
+                    setServerStatus(SERVER_STATUS_TYPE.OFFLINE);
+                }
             }
         }, 5000);
         return () => clearInterval(interval);
     }, [serverStatus]);
 
     useEffect(() => {
-        const socket = new WebSocket('ws://192.168.0.169:9090/ws?client_id=deepfake_guardian_client');
-        socket.onopen = () => {
-          console.log('ws open');
+        const initializeSocket = () => {
+            const ws = new WebSocket('ws://192.168.0.169:9090/ws?client_id=deepfake_guardian_client');
+            
+            ws.onopen = () => {
+                console.log('ws open');
+            };
+            
+            ws.onmessage = (e: MessageEvent) => {
+                const message: WebSocketMessage = JSON.parse(e.data);
+                if (message.type === WEBSOCKET_MESSAGE_TYPE.MEDIA_UPDATED) {
+                    console.log('Media updated RECEVING');
+                    fetchMediaItems();
+                }
+            };
+            
+            ws.onclose = () => {
+                console.log('ws close');
+            };
+            
+            setSocket(ws);
         };
-        socket.onmessage = (e: MessageEvent) => {
-            const message: WebSocketMessage = JSON.parse(e.data);
-            if (message.type === WEBSOCKET_MESSAGE_TYPE.MEDIA_UPDATED) {
-                fetchMediaItems();
+
+        if (serverStatus === SERVER_STATUS_TYPE.ONLINE) {
+            initializeSocket();
+        }
+
+        return () => {
+            if (socket) {
+                socket.close();
+                setSocket(null);
             }
-        }
-        socket.onclose = () => {
-          console.log('ws close');
-        }
+        };
     }, [serverStatus]);
+
+    const syncData = async () => {
+        for (let i = 0; i < mediaItemsThatNeedToBeUpdated.length; i++) {
+          await updateMedia({...mediaItemsThatNeedToBeUpdated[i], tags: mediaItemsThatNeedToBeUpdated[i].tags.join(",")});
+        }
+        for (let i = 0; i < mediaItemsThatNeedToBeDeleted.length; i++) {
+          await removeMediaItem(mediaItemsThatNeedToBeDeleted[i]);
+        }
+        mediaItemsThatNeedToBeUpdated = [];
+        mediaItemsThatNeedToBeDeleted = [];
+      }
 
     const handleSearch = (searchTerm: string) => {
         lastSearchTerm.current = searchTerm;
@@ -116,6 +156,12 @@ export const MediaItemsProvider = ({ children }: any) => {
 
     const deleteMediaItem = async (id: string) => {
         try {
+            if(serverStatus === SERVER_STATUS_TYPE.OFFLINE) {
+                mediaItemsThatNeedToBeDeleted.push(id);
+                allMediaItems.current = allMediaItems.current.filter((mediaItem) => mediaItem.id !== id);
+                handleSearch(lastSearchTerm.current);
+                return;
+            }
             await removeMediaItem(id);
         } catch (error) {
             console.error("Error deleting media item", error);
@@ -131,6 +177,23 @@ export const MediaItemsProvider = ({ children }: any) => {
 
     const updateMediaItem = async (mediaItem: MediaItem) => {
         try {
+            if(serverStatus === SERVER_STATUS_TYPE.OFFLINE) {
+                // replace if already exists to avoid duplicates calls to server
+                const existingIndex = mediaItemsThatNeedToBeUpdated.findIndex((item) => item.id === mediaItem.id);
+                if (existingIndex !== -1) {
+                    mediaItemsThatNeedToBeUpdated[existingIndex] = mediaItem;
+                } else {
+                    mediaItemsThatNeedToBeUpdated.push(mediaItem);
+                }
+                allMediaItems.current = allMediaItems.current.map((item) => {
+                    if (item.id === mediaItem.id) {
+                        return mediaItem;
+                    }
+                    return item;
+                });
+                handleSearch(lastSearchTerm.current);
+                return;
+            }
             await updateMedia({
                 ...mediaItem,
                 tags: mediaItem.tags.join(","),
@@ -156,7 +219,7 @@ export const MediaItemsProvider = ({ children }: any) => {
             );
         }
     };
-
+    
     return (
         <MediaItemContext.Provider
             value={{

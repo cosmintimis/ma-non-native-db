@@ -16,7 +16,9 @@ export type MediaItemAPI = {
 }
 
 export const getMediaItems = async (): Promise<MediaItem[]> => {
-    const response = await axios.get(`${BASE_URL}`);
+    const response = await axios.get(`${BASE_URL}`, {
+        timeout: 5000 // 5 seconds
+    });
     const mediaItems: MediaItem[] = response.data.map((item: MediaItemAPI) => {
         return {
             id: item.id,

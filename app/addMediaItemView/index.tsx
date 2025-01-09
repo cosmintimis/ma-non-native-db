@@ -13,13 +13,13 @@ import * as ImagePicker from "expo-image-picker";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { MediaItem } from "@/model/mediaItem";
 import { convertToBase64, convertUriToByteArray } from "@/utils/generalUtils";
-import { useMediaItemsStore } from "@/repository/repository";
+import { SERVER_STATUS_TYPE, useMediaItemsStore } from "@/repository/repository";
 import toastConfig from "@/components/toastConfig";
 import Toast from "react-native-toast-message";
 
 export default function AddMediaItemView() {
     const navigation = useNavigation();
-    const { addMediaItem } = useMediaItemsStore();
+    const { addMediaItem, serverStatus } = useMediaItemsStore();
 
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
@@ -156,7 +156,7 @@ export default function AddMediaItemView() {
                 <TouchableOpacity
                     onPress={handleCreate}
                     className="bg-black py-2 px-4 rounded-md shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!isFormValid || disableButton}
+                    disabled={!isFormValid || disableButton || serverStatus === SERVER_STATUS_TYPE.OFFLINE}
                 >
                     <Text className="text-white text-center">Add</Text>
                 </TouchableOpacity>
