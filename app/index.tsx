@@ -1,6 +1,6 @@
 import { MediaItemList } from "@/components/mediaItemList";
 import toastConfig from "@/components/toastConfig";
-import { useMediaItemsStore } from "@/repository/repository";
+import { SERVER_STATUS_TYPE, useMediaItemsStore } from "@/repository/repository";
 import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import {
@@ -16,7 +16,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 
 export default function Index() {
     const navigation = useNavigation<any>();
-    const { handleSearch } = useMediaItemsStore();
+    const { handleSearch, serverStatus } = useMediaItemsStore();
     React.useLayoutEffect(() => {
         navigation.setOptions({
             headerTitle: "Media Collection",
@@ -34,6 +34,11 @@ export default function Index() {
     }, [navigation]);
     return (
         <SafeAreaView className="w-full h-full">
+             {serverStatus === SERVER_STATUS_TYPE.OFFLINE && (
+                <View className="p-3 w-full z-20">
+                    <Text className="text-center text-red-500">API server is offline...</Text>
+                </View>
+            )}
             <MediaItemList />
             <View className="absolute bottom-0 right-0 p-4 z-10">
                 <TouchableOpacity

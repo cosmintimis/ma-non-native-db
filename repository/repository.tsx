@@ -9,6 +9,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 type MediaItemContextType = {
     mediaItems: MediaItem[];
+    serverStatus: SERVER_STATUS_TYPE;
     setMediaItems: React.Dispatch<React.SetStateAction<MediaItem[]>>;
     handleSearch: (searchTerm: string) => void;
     deleteMediaItem: (id: string) => Promise<void>;
@@ -25,8 +26,15 @@ export const WEBSOCKET_MESSAGE_TYPE = {
 } as const;
 export type WEBSOCKET_MESSAGE_TYPE = (typeof WEBSOCKET_MESSAGE_TYPE)[keyof typeof WEBSOCKET_MESSAGE_TYPE];
 
+export const SERVER_STATUS_TYPE = {
+    ONLINE: "Online",
+    OFFLINE: "Offline",
+} as const;
+export type SERVER_STATUS_TYPE = (typeof SERVER_STATUS_TYPE)[keyof typeof SERVER_STATUS_TYPE];
+
 export const MediaItemContext = createContext<MediaItemContextType>({
     mediaItems: [],
+    serverStatus: SERVER_STATUS_TYPE.ONLINE,
     setMediaItems: () => {},
     handleSearch: () => {},
     deleteMediaItem: async () => {},
@@ -35,11 +43,14 @@ export const MediaItemContext = createContext<MediaItemContextType>({
     addMediaItem: async () => {},
 });
 
+let mediaItemsThatNeedToBeUpdated = [] as MediaItem[];
+let mediaItemsThatNeedToBeDeleted = [] as string[];
+
 export const MediaItemsProvider = ({ children }: any) => {
     const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
     const allMediaItems = useRef<MediaItem[]>([]);
     const lastSearchTerm = useRef<string>("");
-    const [serverStatus, setServerStatus] = useState("Offline");
+    const [serverStatus, setServerStatus] = useState<SERVER_STATUS_TYPE>(SERVER_STATUS_TYPE.ONLINE);
 
     const fetchMediaItems = async () => {
         try {
@@ -60,24 +71,24 @@ export const MediaItemsProvider = ({ children }: any) => {
     }, []);
 
     // Check server status every 5 seconds
-    // useEffect(() => {
-    //     const interval = setInterval(async () => {
-    //         try {
-    //             await fetch("http://192.168.0.169:9090/api/health-check/v1/status");
-    //             if (serverStatus === "Offline") {
-    //                 setServerStatus("Online");
-    //             }
-    //         } catch (error) {
-    //             setServerStatus("Offline");
-    //         }
-    //     }, 5000);
-    //     return () => clearInterval(interval);
-    // }, [serverStatus]);
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            try {
+                await fetch("http://192.168.0.169:9090/api/health-check/v1/status");
+                if (serverStatus === SERVER_STATUS_TYPE.OFFLINE) {
+                    setServerStatus(SERVER_STATUS_TYPE.ONLINE);
+                }
+            } catch (error) {
+                setServerStatus(SERVER_STATUS_TYPE.OFFLINE);
+            }
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [serverStatus]);
 
     useEffect(() => {
-        const socket = new WebSocket('ws://192.168.0.169:9090/ws');
+        const socket = new WebSocket('ws://192.168.0.169:9090/ws?client_id=deepfake_guardian_client');
         socket.onopen = () => {
-          console.log('open');
+          console.log('ws open');
         };
         socket.onmessage = (e: MessageEvent) => {
             const message: WebSocketMessage = JSON.parse(e.data);
@@ -86,7 +97,7 @@ export const MediaItemsProvider = ({ children }: any) => {
             }
         }
         socket.onclose = () => {
-          console.log('close');
+          console.log('ws close');
         }
     }, [serverStatus]);
 
@@ -150,6 +161,7 @@ export const MediaItemsProvider = ({ children }: any) => {
         <MediaItemContext.Provider
             value={{
                 mediaItems,
+                serverStatus,
                 setMediaItems,
                 handleSearch,
                 deleteMediaItem,
